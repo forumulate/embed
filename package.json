@@ -1,0 +1,68 @@
+{
+  "name": "@forumulate/embed",
+  "version": "1.0.0",
+  "description": "Add Forumulate comments, search, changelog and content to any website: Web Components, mount functions and a typed client for the public read API.",
+  "license": "MIT",
+  "author": "Forumulate",
+  "homepage": "https://forumulate.com/guides",
+  "bugs": {
+    "url": "https://forumulate.com/community"
+  },
+  "keywords": [
+    "forumulate",
+    "comments",
+    "changelog",
+    "docs",
+    "forum",
+    "blog",
+    "web-components",
+    "custom-elements",
+    "headless-cms",
+    "ssg"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "jsdelivr": "./dist/forumulate-elements.js",
+  "unpkg": "./dist/forumulate-elements.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "default": "./dist/client.js"
+    },
+    "./elements": {
+      "types": "./dist/elements.d.ts",
+      "default": "./dist/elements.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "sideEffects": [
+    "./dist/elements.js"
+  ],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && esbuild src/elements.ts --bundle --format=esm --minify --target=es2020 --outfile=dist/forumulate-elements.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0",
+    "typescript": "^5.6.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/forumulate/embed.git"
+  }
+}
