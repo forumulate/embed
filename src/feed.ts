@@ -71,8 +71,9 @@ const READER_PREFIX: Record<FeedKind, string> = {
 function itemHref(o: FeedOptions & { kind: FeedKind }, id: string, slug: string): string {
   if (o.href) return o.href.replaceAll('{slug}', encodeURIComponent(slug)).replaceAll('{id}', encodeURIComponent(id));
   const base = `${siteOrigin(o.apiBase)}/${READER_PREFIX[o.kind]}/${encodeURIComponent(o.org)}/${encodeURIComponent(o.space)}`;
-  // The changelog reader is one page with an anchor per release.
-  return o.kind === 'releases' ? `${base}#${encodeURIComponent(slug)}` : `${base}/${encodeURIComponent(slug)}`;
+  // Every kind has a page per item; releases are read through the widget
+  // endpoint below, which already names each one's page on its real address.
+  return `${base}/${encodeURIComponent(slug)}`;
 }
 
 /** Fetch the items a feed shows. Runs on the server or in the browser. */
@@ -92,12 +93,29 @@ export async function fetchFeed(opts: FeedOptions): Promise<FeedItem[]> {
       meta: null,
     }));
   }
+  if (o.kind === 'releases') {
+    /*
+     * Releases link to their OWN pages (CL-4). This list used to point every
+     * release at `…/c/<org>/<space>#<slug>` — an anchor on the timeline, on
+     * our origin even for a changelog read on the customer's domain, from
+     * before releases had pages. The widget endpoint names each page on the
+     * space's public address, the same lookup the feeds use.
+     */
+    const w = await client.getChangelogWidget({ limit, init: o.init });
+    return w.releases.slice(0, limit).map((r) => ({
+      id: r.id,
+      slug: r.slug,
+      title: r.title,
+      href: o.href ? itemHref(o, r.id, r.slug) : r.url,
+      excerpt: r.excerpt,
+      date: r.date,
+      meta: r.version,
+    }));
+  }
   const list =
     o.kind === 'posts'
       ? await client.listPosts({ limit, tag: o.tag, init: o.init })
-      : o.kind === 'topics'
-        ? await client.listTopics({ limit, tag: o.tag, category: o.category, init: o.init })
-        : await client.listReleases({ limit, init: o.init });
+      : await client.listTopics({ limit, tag: o.tag, category: o.category, init: o.init });
   return list.items.slice(0, limit).map((a) => ({
     id: a.id,
     slug: a.slug,
@@ -106,11 +124,7 @@ export async function fetchFeed(opts: FeedOptions): Promise<FeedItem[]> {
     excerpt: a.excerpt ?? '',
     date: a.publishedAt ?? a.updatedAt ?? null,
     meta:
-      o.kind === 'releases'
-        ? a.releaseVersion
-        : o.kind === 'topics'
-          ? `${a.replyCount} ${a.replyCount === 1 ? 'reply' : 'replies'}`
-          : null,
+      o.kind === 'topics' ? `${a.replyCount} ${a.replyCount === 1 ? 'reply' : 'replies'}` : null,
   }));
 }
 

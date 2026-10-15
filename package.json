@@ -1,6 +1,6 @@
 {
   "name": "@forumulate/embed",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Add Forumulate comments, search, changelog and content to any website: Web Components, mount functions and a typed client for the public read API.",
   "license": "MIT",
   "author": "Forumulate",

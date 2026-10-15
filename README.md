@@ -47,7 +47,10 @@ Attributes: `org`, `space`, `api`, `theme` (`light` | `dark` | `auto`), `locale`
 `radius`, `width`, `font`, `nonce`; comments add `topic` (a topic slug) and `article-url`;
 the widget adds `mode` (`search` | `ask`) and `placeholder`; the feed adds `kind`
 (`posts` | `topics` | `pages` | `releases`, or the space-type names `blog` | `forum` | `docs` | `changelog`), `limit`, `tag`, `category`, `href` and
-`excerpts="false"`. Changing an attribute re-renders. Elements fire `forumulate:load` and
+`excerpts="false"`. The changelog adds `mode` (`dropdown` | `sidebar-left` | `sidebar-right` |
+`modal` | `inline`), `selector` (open from your own button), `counter="false"`, `limit`,
+`announce="false"` and `user` (segmentation, JSON: `user='{"plans":"Pro"}'`); unset, each
+follows the changelog owner's defaults (`theme.changelog.widget`). Changing an attribute re-renders. Elements fire `forumulate:load` and
 `forumulate:error` (bubbling `CustomEvent`s). The feed is styled by `.fm-feed*` classes and
 the `--fm-accent`, `--fm-muted`, `--fm-line`, `--fm-font` custom properties.
 
@@ -144,8 +147,15 @@ not needed):
 ```
 
 The same pattern works for the other embeds: `widget.js` (docs search; `data-mode="ask"` for
-the AI answer box) and `changelog.js` (the bell). Every script also reads `data-api`,
+the AI answer box) and `changelog.js` (the "What's new" widget). Every script also reads `data-api`,
 `data-theme`, `data-locale`, `data-accent`, `data-radius`, `data-width` and `data-font`.
+
+`changelog.js` also reads `data-mode`, `data-selector`, `data-counter`, `data-limit`,
+`data-announce` and `data-user-<field>` (`data-user-plans="Pro"`: only the releases for that
+visitor). Each card links to the release's own page on the changelog's address. From your own
+code: `window.Forumulate.changelog.open()`, `.close()`, `.toggle()`, `.count()` and
+`.onCount(cb)`; the element (or the script's parent) also receives a bubbling
+`forumulate:count` event with the unread count.
 
 If your site sets a Content-Security-Policy, allow `script-src` and `connect-src` for the
 Forumulate origin (and add the embedding host to your org's **embeddable hosts** to restrict

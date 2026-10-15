@@ -14,6 +14,7 @@
 import type {
   Article,
   ArticleSummary,
+  ChangelogWidget,
   Page,
   PageNode,
   PageSummary,
@@ -112,6 +113,16 @@ export interface ForumulateClient {
   listReleases(o?: ListOptions): Promise<Paged<Article>>;
   getRelease(slug: string, o?: CallOptions): Promise<Article>;
   getReleaseMarkdown(slug: string, o?: CallOptions): Promise<string>;
+  /**
+   * The releases as the in-app widget draws them, each with its own page URL
+   * on the changelog's public address. `segments` narrows to a visitor
+   * (`{ plans: 'Pro' }`).
+   */
+  getChangelogWidget(o?: {
+    limit?: number;
+    segments?: Record<string, string | readonly string[]>;
+    init?: FetchInit;
+  }): Promise<ChangelogWidget>;
   /** Full-text search over a docs space. */
   search(q: string, o?: { limit?: number; init?: FetchInit }): Promise<SearchResult>;
   /** Escape hatch: GET any path under the space's public root. */
@@ -246,6 +257,12 @@ export function createClient(options: ClientOptions): ForumulateClient {
     getRelease: async (s, o) =>
       (await json<{ release: Article }>(`/changelog/t/${seg(s)}`, {}, o?.init)).release,
     getReleaseMarkdown: (s, o) => text(`/changelog/t/${seg(s)}.md`, {}, o?.init),
+    getChangelogWidget: (o = {}) => {
+      const q: Query = { limit: o.limit };
+      for (const [k, v] of Object.entries(o.segments ?? {}))
+        q[`seg_${k}`] = Array.isArray(v) ? v.join(',') : String(v);
+      return json<ChangelogWidget>('/changelog/widget', q, o.init);
+    },
     search: (q, o) => json<SearchResult>('/search', { q, limit: o?.limit }, o?.init),
     get: (path, query, init) => json(path.startsWith('/') || !path ? path : `/${path}`, query, init),
   };

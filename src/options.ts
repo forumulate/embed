@@ -58,7 +58,30 @@ export interface WidgetOptions extends EmbedOptions {
   placeholder?: string;
 }
 
-export type ChangelogOptions = EmbedOptions;
+/** Where the changelog panel opens (CL-4). Unset = the owner's default (`dropdown`). */
+export type ChangelogMode = 'dropdown' | 'sidebar-left' | 'sidebar-right' | 'modal' | 'inline';
+
+export interface ChangelogOptions extends EmbedOptions {
+  /** Where the panel opens. Unset = the changelog owner's `theme.changelog.widget.mode`. */
+  mode?: ChangelogMode;
+  /**
+   * A CSS selector for YOUR OWN button: the panel opens from it (and the
+   * unread count sits on it) instead of from our bell.
+   */
+  selector?: string;
+  /** The unread count. Unset = the owner's default (on). */
+  counter?: boolean;
+  /** How many releases the panel lists (1–30). */
+  limit?: number;
+  /** Show the boosted release (bar, toast or dialog) once per visitor. Default true. */
+  announce?: boolean;
+  /**
+   * Segmentation: who this visitor is, by the changelog's release fields —
+   * `{ plans: 'Pro', audience: ['Admins'] }` shows only the releases for them
+   * (a release that names no value for a field shows to everyone).
+   */
+  user?: Record<string, string | readonly string[]>;
+}
 
 export type OptionsFor<K extends EmbedKind> = K extends 'comments'
   ? CommentsOptions
@@ -117,6 +140,19 @@ export function scriptAttributes<K extends EmbedKind>(
   if (kind === 'widget') {
     attrs['data-mode'] = o.mode;
     attrs['data-placeholder'] = o.placeholder;
+  }
+  if (kind === 'changelog') {
+    const c = opts as ChangelogOptions;
+    attrs['data-mode'] = c.mode;
+    attrs['data-selector'] = c.selector;
+    attrs['data-counter'] = c.counter == null ? undefined : String(c.counter);
+    attrs['data-limit'] = c.limit == null ? undefined : String(c.limit);
+    attrs['data-announce'] = c.announce == null ? undefined : String(c.announce);
+    for (const [k, v] of Object.entries(c.user ?? {})) {
+      // `data-user-<field>`: the hosted script sends each as `seg_<field>`.
+      if (/^[A-Za-z][\w-]{0,59}$/.test(k))
+        attrs[`data-user-${k}`] = Array.isArray(v) ? v.join(',') : String(v);
+    }
   }
   const out: Record<string, string> = {};
   for (const [k, v] of Object.entries(attrs)) if (v != null && v !== '') out[k] = String(v);

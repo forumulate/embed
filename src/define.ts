@@ -5,7 +5,7 @@
  *   <forumulate-comments org="acme" space="blog"></forumulate-comments>
  *   <forumulate-widget   org="acme" space="docs" mode="ask"></forumulate-widget>
  *   <forumulate-search   org="acme" space="docs"></forumulate-search>
- *   <forumulate-changelog org="acme" space="changelog"></forumulate-changelog>
+ *   <forumulate-changelog org="acme" space="changelog" mode="sidebar-right"></forumulate-changelog>
  *   <forumulate-feed     org="acme" space="blog" kind="posts" limit="5"></forumulate-feed>
  *
  * Light DOM, not shadow DOM: the hosted scripts render ordinary markup that
@@ -32,7 +32,7 @@ const EXTRA: Record<keyof typeof ELEMENT_TAGS, string[]> = {
   comments: ['topic', 'article-url'],
   widget: ['mode', 'placeholder'],
   search: ['placeholder'],
-  changelog: [],
+  changelog: ['mode', 'selector', 'counter', 'limit', 'announce', 'user'],
   feed: ['kind', 'limit', 'tag', 'category', 'href', 'excerpts'],
 };
 
@@ -136,7 +136,29 @@ export function defineForumulateElements(registry?: CustomElementRegistry): bool
     comments: scripted('comments', EXTRA.comments, (el) => ({ topic: attr(el, 'topic'), articleUrl: attr(el, 'article-url') })),
     widget: scripted('widget', EXTRA.widget, (el) => ({ mode: attr(el, 'mode'), placeholder: attr(el, 'placeholder') })),
     search: scripted('widget', EXTRA.search, (el) => ({ mode: 'search', placeholder: attr(el, 'placeholder') })),
-    changelog: scripted('changelog', EXTRA.changelog, () => ({})),
+    // CL-4: `user` is a JSON object of segment values (`user='{"plans":"Pro"}'`).
+    changelog: scripted('changelog', EXTRA.changelog, (el) => {
+      const limit = Number(attr(el, 'limit'));
+      const flag = (n: string) => {
+        const v = attr(el, n);
+        return v == null ? undefined : !(v === 'false' || v === '0' || v === 'off');
+      };
+      let user: Record<string, string> | undefined;
+      try {
+        const raw = attr(el, 'user');
+        user = raw ? (JSON.parse(raw) as Record<string, string>) : undefined;
+      } catch {
+        user = undefined;
+      }
+      return {
+        mode: attr(el, 'mode'),
+        selector: attr(el, 'selector'),
+        counter: flag('counter'),
+        limit: Number.isFinite(limit) && limit > 0 ? limit : undefined,
+        announce: flag('announce'),
+        user,
+      };
+    }),
     feed: class extends ForumulateElement {
       static get observedAttributes() {
         return [...COMMON, ...EXTRA.feed];

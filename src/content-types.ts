@@ -182,3 +182,33 @@ export interface Paged<T> {
   nextCursor: string | null;
   total?: number;
 }
+
+/** One release as the in-app widget draws it (`GET …/changelog/widget`). */
+export interface ChangelogWidgetRelease {
+  id: string;
+  slug: string;
+  title: string;
+  version: string | null;
+  /** ISO publish date. */
+  date: string | null;
+  excerpt: string;
+  /** The release's own page, on the changelog's public address (its custom domain when it has one). */
+  url: string;
+  coverUrl: string | null;
+  /** The declared change type ("New", "Fixed"). */
+  type: string | null;
+  tags: string[];
+  breaking: boolean;
+  /** `bar` | `toast` | `modal` when the release is boosted and not expired. */
+  announce: 'bar' | 'toast' | 'modal' | null;
+}
+
+/** The widget's data: the owner's config, the releases, and the boosted one. */
+export interface ChangelogWidget {
+  name: string;
+  /** Where the changelog is read. */
+  home: string;
+  config: Record<string, unknown>;
+  releases: ChangelogWidgetRelease[];
+  announce: ChangelogWidgetRelease | null;
+}
