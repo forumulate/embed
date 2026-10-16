@@ -89,6 +89,40 @@ returns `false` there.
 Server templates can print the embeds without JavaScript of their own: `scriptTag('comments', opts)`
 returns the `<script>` tag, and `feedHtml(await fetchFeed(opts))` the feed markup.
 
+## A content library (headless CMS)
+
+`@forumulate/embed/content` reads a **content library** (id or slug) through the Delivery API with a
+delivery key (`cfd_`, server), a publishable key (`cfp_`, browser, from its listed origins) or a
+preview key (`cfv_`). It is its own entry, so sites that only embed comments never ship it
+(about 2 KB gzipped).
+
+```ts
+import { createContentClient, imageUrl } from '@forumulate/embed/content';
+
+const cms = createContentClient({ library: 'lib_…', key: process.env.FORUMULATE_KEY! });
+const { data, page } = await cms.getEntries<Post>('post', {
+  where: { category: { equals: 'news' }, or: [{ featured: { equals: true } }] },
+  sort: '-publishedAt',
+  limit: 10,
+});
+const next = await cms.getEntries<Post>('post', { cursor: page.nextCursor });
+for await (const window of cms.paginate('post')) { /* every page, by cursor */ }
+const header = await cms.getGlobal('header');
+const hit = await cms.resolveRoute('/pricing'); // { kind: 'entry', entry } | { kind: 'redirect', to } | null
+const src = imageUrl(entry.fields.hero, { w: 1200, ar: '16:9', fit: 'cover' });
+```
+
+`getEntries`, `getEntry`, `getGlobal`, `query` (the `where` in a POST body; `getEntries` switches
+to it on its own when a `where` is too long for a URL), `resolveRoute`, `paginate`, `all`, `get`.
+`imageUrl` / `imageSrcSet` snap to the API's allowed widths and aspects. `stegaClean` returns its
+input unchanged until stega ships.
+
+`@forumulate/embed/content/server` has what a site's server needs: `handleRevalidate` (verify a
+`content.*` webhook, then hand over its `tags`), `handlePreview` / `handleExitPreview` (the preview
+routes) and `createServerContent` (draft reads when the request carries the preview cookie,
+published reads from a tag-invalidated cache otherwise). The Next, Astro, Nuxt and SvelteKit
+packages wrap these.
+
 ## Website builders
 
 Each snippet is one container plus the hosted script. Replace `acme` / `community` with your

@@ -1,6 +1,6 @@
 {
   "name": "@forumulate/embed",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Add Forumulate comments, search, changelog and content to any website: Web Components, mount functions and a typed client for the public read API.",
   "license": "MIT",
   "author": "Forumulate",
@@ -39,6 +39,18 @@
       "types": "./dist/elements.d.ts",
       "default": "./dist/elements.js"
     },
+    "./content": {
+      "types": "./dist/content/index.d.ts",
+      "default": "./dist/content/index.js"
+    },
+    "./content/server": {
+      "types": "./dist/content/server.d.ts",
+      "default": "./dist/content/server.js"
+    },
+    "./live-preview": {
+      "types": "./dist/live-preview/index.d.ts",
+      "default": "./dist/live-preview/index.js"
+    },
     "./package.json": "./package.json"
   },
   "sideEffects": [
@@ -55,11 +67,13 @@
   "scripts": {
     "build": "tsc -p tsconfig.json && esbuild src/elements.ts --bundle --format=esm --minify --target=es2020 --outfile=dist/forumulate-elements.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "test": "vitest run"
   },
   "devDependencies": {
     "esbuild": "^0.24.0",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.4"
   },
   "repository": {
     "type": "git",

@@ -22,7 +22,10 @@ import type {
   SearchResult,
   SpaceOverview,
 } from './content-types.js';
+import { errorFrom } from './errors.js';
 import { normalizeApiBase } from './options.js';
+
+export { ForumulateError } from './errors.js';
 
 export * from './content-types.js';
 
@@ -71,20 +74,6 @@ export interface PageOptions {
 
 export interface CallOptions {
   init?: FetchInit;
-}
-
-/** Thrown for any non-2xx answer; carries the API's `{ error: { code, message } }`. */
-export class ForumulateError extends Error {
-  constructor(
-    readonly status: number,
-    readonly code: string,
-    message: string,
-    readonly url: string,
-    readonly requestId?: string,
-  ) {
-    super(message);
-    this.name = 'ForumulateError';
-  }
 }
 
 /** The list routes answer an enveloped `page` to callers that state this version. */
@@ -185,19 +174,7 @@ export function createClient(options: ClientOptions): ForumulateClient {
       headers.set('forumulate-version', API_VERSION);
     } else headers.set('accept', 'text/markdown, text/plain');
     const res = await doFetch(url, { ...merged, method: 'GET', headers });
-    if (!res.ok) {
-      let code = 'http.' + res.status;
-      let message = `${res.status} ${res.statusText}`.trim();
-      try {
-        const body = (await res.json()) as { error?: { code?: string; message?: string } };
-        if (body?.error?.code) code = body.error.code;
-        if (body?.error?.message) message = body.error.message;
-      } catch {
-        // not JSON — keep the status line
-      }
-      const rid = res.headers.get('x-request-id') ?? undefined;
-      throw new ForumulateError(res.status, code, message, url, rid);
-    }
+    if (!res.ok) throw await errorFrom(res, url);
     return as === 'json' ? res.json() : res.text();
   }
   const json = <T>(path: string, query: Query = {}, init?: FetchInit) =>

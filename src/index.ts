@@ -12,4 +12,4 @@ export * from './mount.js';
 export * from './client.js';
 export * from './feed.js';
 export { defineForumulateElements, ELEMENT_TAGS } from './define.js';
-export const VERSION = '1.1.0';
+export const VERSION = '1.2.0';
