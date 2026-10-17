@@ -26,7 +26,7 @@ export interface StegaSource {
 
 const MARK = '⁣';
 const DIGITS = ['​', '‌', '‍', '﻿'];
-const RUN = /⁣(?:[​‌‍﻿]{4})+/g;
+const RUN = /\u2063(?:[\u200D\u200B\u200C\uFEFF]{4})+/g;
 
 /** `text` with `source` hidden at its end (any run it already carried is replaced). */
 export function stegaEncode(text: string, source: StegaSource): string {
